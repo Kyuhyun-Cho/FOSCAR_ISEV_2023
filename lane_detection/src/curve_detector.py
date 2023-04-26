@@ -175,7 +175,7 @@ class Controller() :
                 self.motor_msg = 5
                 self.steering_val = self.error_lane * 0.001
                 if self.yaw < -80 and self.turn_flag == -1:
-                    self.motor_msg = 13
+                    self.motor_msg = 7
 
             if abs(self.angle) >= 300 : 
                 print("차선인식 주행 중")
@@ -188,7 +188,7 @@ class Controller() :
                     print("우회전 중입니다")
                 else :
                     print("좌회전 중입니다.")
-
+            print(self.yaw)
             if self.turn_flag == 1 and -45 <= self.yaw <= -40 and self.turn_left == 0:
                 self.motor_msg = 4
                 print("좌회전 어느정도 완료했습니다.")

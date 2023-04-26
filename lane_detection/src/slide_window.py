@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.interpolate import *
 from matplotlib.pyplot import *
+import math
 # float로 조향값 public
 
 TOTAL_CNT = 50
@@ -26,7 +27,43 @@ class SlideWindow:
 
         self.x_previous = 320
 
-    def slidewindow(self, img):
+
+
+    def curve(self, img) :
+        ## 수평선 상자
+        curve_img = img[370:470, 240:400] # 358
+        edges = cv2.Canny(curve_img, 50, 150)
+        # lines = cv2.HoughLines(edges,1,np.pi/180, 100)
+        rho = 1
+        theta = np.pi/180
+        threshold = 20
+        min_line_length = 20
+        max_line_gap = 10000
+        max_len = 20
+        angle = 500
+        lines = cv2.HoughLinesP(edges, rho, theta, threshold, np.array([]), min_line_length, max_line_gap)
+        try :
+            for line in lines:
+                # print("@#")
+                x1, y1, x2, y2 = line[0]
+                length = math.sqrt((x2 - x1)**2 + (y2 - y1)**2)
+                # print(length)
+                if length > max_len:
+                    max_len = length
+                    longest_line = line
+            # print("###")
+            # print(longest_line)
+            x1, y1, x2, y2 = longest_line[0]
+            # print(x1,y1,x2,y2)
+            angle = math.atan2(y2 - y1, x2 - x1) * 180 / math.pi
+        except :
+            pass
+
+        return curve_img, angle
+
+
+
+    def slidewindow(self, img, yaw):
 
         x_location = 320.0
         # init out_img, height, width        
@@ -34,6 +71,7 @@ class SlideWindow:
         # out_img = img # added 
         height = img.shape[0]
         width = img.shape[1]
+        yaw = yaw
 
         # num of windows and init the height
         window_height = 15 # 7
@@ -85,7 +123,16 @@ class SlideWindow:
         # if minpix is enough on left, draw left, then draw right depends on left
         # else draw right, then draw left depends on right
 
-        if len(good_left_inds) > len(good_right_inds):            
+        # print(len(good_left_inds), len(good_right_inds))
+
+        if yaw <- 20 and len(good_right_inds) >= 50 :
+            self.current_line = "RIGHT"
+            line_flag = 2
+            # x_current = nonzerox[good_right_inds[np.argmax(nonzeroy[good_right_inds])]]
+            x_current = int(np.mean(nonzerox[good_right_inds]))
+            y_current = int(np.max(nonzeroy[good_right_inds]))
+        elif len(good_left_inds) > len(good_right_inds): 
+            # print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')          
             self.current_line = "LEFT"
             line_flag = 1
             x_current = int(np.mean(nonzerox[good_left_inds]))
@@ -101,6 +148,7 @@ class SlideWindow:
             x_current = int(np.mean(nonzerox[good_right_inds]))
             y_current = int(np.max(nonzeroy[good_right_inds]))
         else:
+            print("Cant SEE!!!!")
             self.current_line = "MID"
             line_flag = 3   
 
@@ -140,7 +188,7 @@ class SlideWindow:
                 if win_y_low >= 338 and win_y_low < 348:
                     # print("x: ", x_current)
                 # 0.165 is the half of the road(0.33)
-                    x_location = x_current + int(width * 0.24) 
+                    x_location = x_current + int(width * 0.24) + 7
                     self.x_previous = x_location
                     cv2.circle(out_img, (x_location, 340), 10, (0, 0, 255), 5)
 

@@ -22,8 +22,7 @@ ros::Publisher obsClusterPub; //Cluster Publishser
 ros::Publisher obsMarkerPub; //Bounnding Box Visualization Publisher
 ros::Publisher obsPosePub; //Bounding Box Position Publisher
 ros::Publisher obsCropboxPub; //Cropbox Publishser
-ros::Publisher obsShortFlagPub;
-ros::Publisher obsLongFlagPub;
+ros::Publisher obsInfoPub;
 
 void dynamicParamCallback(obstacle_detection::hyper_parameterConfig &config, int32_t level) {
   xMinROI = config.xMinROI;
@@ -60,10 +59,13 @@ void cloud_cb(const sensor_msgs::PointCloud2ConstPtr& inputcloud) {
   obstacle_detection::Boundingbox BoxPosition;
 
   //Dynamic Obstacle Detected Message
-  std_msgs::Bool DynamicObsLongDetected;
-  std_msgs::Bool DynamicObsShortDetected;
-  DynamicObsLongDetected.data = false;
-  DynamicObsShortDetected.data = false;
+  std_msgs::Float64MultiArray ObsInfo;
+  ObsInfo.data.resize(4);
+  ObsInfo.data[0] = 0; // x
+  ObsInfo.data[1] = 0; // y
+  ObsInfo.data[2] = 0; // z
+  ObsInfo.data[3] = 0; // distance
+
 
   pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_xf(new pcl::PointCloud<pcl::PointXYZ>);
   pcl::PassThrough<pcl::PointXYZ> xfilter;
@@ -185,28 +187,34 @@ void cloud_cb(const sensor_msgs::PointCloud2ConstPtr& inputcloud) {
       BoxPosition.distance = distance;
     }
 
-    // if (BoxArray.markers.size() > 0) {
-    //   for (int i = 0; i < BoxArray.markers.size(); i++) {
-    //     vector<float>().swap(obstacle);
-    //     obstacle.emplace_back(BoxArray.markers[i].pose.position.x);
-    //     obstacle.emplace_back(BoxArray.markers[i].pose.position.y);
-    //     obstacle.emplace_back(BoxArray.markers[i].pose.position.z);
-    //     obstacle.emplace_back(distance);
-    //     obstacle_vec.emplace_back(obstacle);
-    //   } 
+    if (BoxArray.markers.size() > 0) {
+      for (int i = 0; i < BoxArray.markers.size(); i++) {
+        vector<float>().swap(obstacle);
+        obstacle.emplace_back(BoxArray.markers[i].pose.position.x);
+        obstacle.emplace_back(BoxArray.markers[i].pose.position.y);
+        obstacle.emplace_back(BoxArray.markers[i].pose.position.z);
+        obstacle.emplace_back(distance);
+        obstacle_vec.emplace_back(obstacle);
+      } 
       
-    //   sort(obstacle_vec.begin(), obstacle_vec.end());
-    //   // if (3.5 <= obstacle_vec[0][0] && obstacle_vec[0][0] < 8) {
-    //   if (5.0 <= obstacle_vec[0][0] && obstacle_vec[0][0] < 8.0) {
-    //     DynamicObsLongDetected.data = true;
-    //   }
-    //   // else if (obstacle_vec[0][0] < 3) {
-    //   else if (obstacle_vec[0][0] < 5.0) {
-    //     DynamicObsShortDetected.data = true;
-    //   }
-    // }
+      sort(obstacle_vec.begin(), obstacle_vec.end());
 
-    // vector< vector<float> >().swap(obstacle_vec);   
+      ObsInfo.data[0] = obstacle_vec[0][0];
+      ObsInfo.data[1] = obstacle_vec[0][1];
+      ObsInfo.data[2] = obstacle_vec[0][2];
+      ObsInfo.data[3] = obstacle_vec[0][3];
+
+      // if (3.5 <= obstacle_vec[0][0] && obstacle_vec[0][0] < 10.0) {
+      //   ObsInfo.data[0] = 1; // Long 
+      //   ObsInfo.data[1] = 0; // Not Short
+      // }
+      // else if (obstacle_vec[0][0] < 3.5) {
+      //   ObsInfo.data[0] = 0; // Not Long
+      //   ObsInfo.data[1] = 1; // Short
+      // }
+    }
+
+    vector< vector<float> >().swap(obstacle_vec);   
 
     cluster_id++; //intensity 증가
 
@@ -218,22 +226,20 @@ void cloud_cb(const sensor_msgs::PointCloud2ConstPtr& inputcloud) {
 
   sensor_msgs::PointCloud2 cluster;
   pcl_conversions::fromPCL(cloud_p, cluster);
-  cluster.header.frame_id = "/velodyne";
+  cluster.header.frame_id = "velodyne";
 
   pcl::PCLPointCloud2 cloud_cropbox;
   pcl::toPCLPointCloud2(*cloud_xyzf, cloud_cropbox);
 
   sensor_msgs::PointCloud2 cropbox;
   pcl_conversions::fromPCL(cloud_cropbox, cropbox);
-  cropbox.header.frame_id = "/velodyne";
+  cropbox.header.frame_id = "velodyne";
 
   obsClusterPub.publish(cluster);
   obsMarkerPub.publish(BoxArray);
   obsPosePub.publish(BoxPosition);
   obsCropboxPub.publish(cropbox);
-  // obsShortFlagPub.publish(DynamicObsShortDetected);
-  // obsLongFlagPub.publish(DynamicObsLongDetected);
-
+  obsInfoPub.publish(ObsInfo);
 }
 
 
@@ -251,10 +257,9 @@ int main(int argc, char **argv) {
 
   obsClusterPub = nh.advertise<sensor_msgs::PointCloud2>("/obs_cluster", 0.001);                  
   obsMarkerPub = nh.advertise<visualization_msgs::MarkerArray>("/obs_marker", 0.001);  
-  obsPosePub = nh.advertise<obstacle_detection::Boundingbox>("/dbs_position", 0.001);    
+  obsPosePub = nh.advertise<obstacle_detection::Boundingbox>("/obs_position", 0.001);    
   obsCropboxPub = nh.advertise<sensor_msgs::PointCloud2>("/obs_cropbox", 0.001); 
-  // obsShortFlagPub = nh.advertise<std_msgs::Bool>("/obs_flag_short", 0.001); 
-  // obsLongFlagPub = nh.advertise<std_msgs::Bool>("/obs_flag_long", 0.001); 
+  obsInfoPub = nh.advertise<std_msgs::Float64MultiArray>("/dy_obs_info", 0.001); 
 
   ros::spin();
 

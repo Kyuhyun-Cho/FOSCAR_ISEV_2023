@@ -18,7 +18,7 @@ class pathReader :
         openFile = open(full_file_name, 'r')
         out_path=Path()
         
-        out_path.header.frame_id='/map'
+        out_path.header.frame_id='map'
         line = openFile.readlines()
         for i in line :
             tmp = i.split()
@@ -127,75 +127,70 @@ class purePursuit :
         self.current_postion=Point()
         self.is_look_forward_point=False
         self.lfd = 1
-        self.min_lfd = 5
-        self.max_lfd = 7
+        self.min_lfd = 13
+        self.max_lfd = 20
         self.vehicle_length = 4.635
         self.steering = 0
         
     def getPath(self,msg):
         self.path = msg  #nav_msgs/Path 
     
-    def getEgoStatus(self, vehicle_longitude, vehicle_latitude, vehicle_yaw):
+    def getEgoStatus(self, vehicle_longitude, vehicle_latitude, vehicle_yaw, vehicle_vel):
         # self.current_vel = msg.velocity.x  #kph
         # self.vehicle_yaw = msg.heading/180*pi   # rad
         self.vehicle_yaw = vehicle_yaw/180*pi 
-        self.current_vel = 5.0
+        self.current_vel = vehicle_vel
+        # self.current_vel = 5
         # self.vehicle_yaw = 0.0   # rad
         self.current_postion.x = vehicle_longitude
         self.current_postion.y = vehicle_latitude
         self.current_postion.z = 0.0
 
-    def steering_angle(self):
+    def steering_angle(self, lfd):
         vehicle_position = self.current_postion
         rotated_point = Point()
         self.is_look_forward_point = False
         
-        # print(self.vehicle_yaw)
-
         self.lfd = 1
-        self.min_lfd = 5
-        self.max_lfd = 7
+        # self.min_lfd = 13
+        # self.max_lfd = 20
 
         for i in self.path.poses :
             path_point = i.pose.position
-            # print(vehicle_position.x, vehicle_position.y)
+            
             dx = path_point.x - vehicle_position.x
             dy = path_point.y - vehicle_position.y
-            # print(path_point.x, path_point.y)
-            # print(dx, dy)
+            
             rotated_point.x = cos(self.vehicle_yaw)*dx + sin(self.vehicle_yaw)*dy
             rotated_point.y = sin(self.vehicle_yaw)*dx - cos(self.vehicle_yaw)*dy
             
-            # print(rotated_point.x, rotated_point.y)
-
+            
             if rotated_point.x > 0 :
                 dis = sqrt(pow(rotated_point.x,2)+pow(rotated_point.y,2))
                 
-                # print(dis, self.lfd)
+                
+
                 if dis >= self.lfd :
-                    # self.lfd = self.current_vel / 1.8
-                    self.lfd = self.current_vel / 1.8
-                    if self.lfd < self.min_lfd : 
-                        self.lfd=self.min_lfd
-                    elif self.lfd > self.max_lfd :
-                        self.lfd=self.max_lfd
-                    self.forward_point=path_point
+                    # self.lfd = self.current_vel 
+                    self.lfd = lfd
+                    # if self.lfd < self.min_lfd : 
+                    #     self.lfd = self.min_lfd/2 -0.5
+                    # elif self.lfd > self.max_lfd :
+                    #     self.lfd = self.max_lfd
+
+                    self.forward_point = path_point
                     self.is_look_forward_point=True
+                    # print(dis, self.lfd)
                     break
+             
 
         theta = atan2(rotated_point.y,rotated_point.x)
-        # print(theta)
-        # print("TARGET_X: ", rotated_point.x, "TARGET_Y: ", rotated_point.y)
-        if self.is_look_forward_point :
-            self.steering = atan2((2*self.vehicle_length*sin(theta)),self.lfd)*180/pi*(-1)#deg
-            # print(self.steering)
-            return self.steering, path_point.x, path_point.y
-        else : 
-            self.steering = atan2((2*self.vehicle_length*sin(theta)),self.lfd)*180/pi*(-1)
-            # print(self.steering)
-            return self.steering, path_point.x, path_point.y
-
-
+        
+    
+        print("LFD: ", self.lfd)
+        self.steering = atan2((2*self.vehicle_length*sin(theta)),self.lfd)*180/pi*(-1)
+        return self.steering, path_point.x, path_point.y
+    
     def rear_steering_angle(self):
         vehicle_position = self.current_postion
         rotated_point = Point()

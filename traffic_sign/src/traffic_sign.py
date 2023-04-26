@@ -7,7 +7,8 @@ import numpy as np
 
 from cv_bridge import CvBridge
 from sensor_msgs.msg import CompressedImage, Image
-from std_msgs.msg import Int64
+from std_msgs.msg import Int64MultiArray
+
 
 # from sensor_msg.msg import CompressedImage
 from cv_bridge import CvBridge
@@ -18,7 +19,7 @@ class Controller() :
         rospy.init_node("traffic_light")
         self.bridge = CvBridge()
         self.original_img = []
-        self.traffic_pub=rospy.Publisher("/traffic_light", Int64, queue_size=1)
+        self.traffic_pub=rospy.Publisher("/traffic_light", Int64MultiArray, queue_size=1)
         self.image_sub = rospy.Subscriber("/image_jpeg/compressed", CompressedImage, self.image_callback)
 
 
@@ -34,8 +35,9 @@ class Controller() :
         
 
     def image_callback(self, _data) :
-        cv2_image = self.bridge.compressed_imgmsg_to_cv2(_data)
+        cv2_image = self.bridge.compressed_imgmsg_to_cv2(_data)                                                                                  
         cv2_image = cv2_image[100:200, 140:500]
+        cv2_image = cv2.resize(cv2_image, (700,700))
         # cv2_image = cv2_image[ 370:410, 140:550 ]
         # red_image=cv2.imread('/home/park/사진/red_light.png')
         # green_image=cv2.imread('/home/park/사진/green_light.png')
@@ -73,17 +75,26 @@ class Controller() :
         # Default : 0, Red : 1, Green :2
         
 
-        if red_count >=18 and red_count <=25:
-            self.traffic_signal = 1
-            # print("RED LIGHT DETECTED")
-        elif green_count >=50 and green_count <=60:
+        # if red_count >=18 and red_count <=25:
+        #     self.traffic_signal = 1
+        #     # print("RED LIGHT DETECTED")
+        # elif green_count >=50 and green_count <=60:
+        #     self.traffic_signal = 2
+        #     # print("GREEN LIGHT DETECTED")
+        # else: 
+        #     self.traffic_signal = 0
+
+        if green_count >=550:
             self.traffic_signal = 2
             # print("GREEN LIGHT DETECTED")
         else: 
-            self.traffic_signal = 0
+            self.traffic_signal = 1
         
 
-        self.traffic_pub.publish(self.traffic_signal)
+        msg = Int64MultiArray()
+        msg.data = [red_count, green_count]
+
+        self.traffic_pub.publish(msg)
 
         res_red = cv2.bitwise_and(hsv_red, cv2_image, mask=mask_red)
         res_green = cv2.bitwise_and(hsv_green, cv2_image, mask=mask_green)
@@ -114,7 +125,7 @@ class Controller() :
         # cv2.imshow("hsv", hsv_image)
 
         # cv2.imshow("original", cv2_image)
-        # cv2.waitKey(1)
+        cv2.waitKey(1)
         # cv2.imshow("warper", warper_image)
     
         # print("success")

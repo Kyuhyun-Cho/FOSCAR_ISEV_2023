@@ -5,7 +5,7 @@ import warnings
 import sys,os
 import rospy
 from nav_msgs.msg import Path
-from std_msgs.msg import Float64, Bool, String, Int64
+from std_msgs.msg import Float64, Bool
 from geometry_msgs.msg import Point
 from visualization_msgs.msg import Marker, MarkerArray
 from pyproj import Proj, transform
@@ -44,16 +44,12 @@ class PurePursuit():
         # Publisher
         self.global_path_pub= rospy.Publisher('/global_path', Path, queue_size=1) ## global_path publisher 
         self.ctrl_cmd_pub = rospy.Publisher('/ctrl_cmd', CtrlCmd, queue_size=1)
-        self.mission_pub = rospy.Publisher('/mission', String, queue_size = 1)
-        self.waypoint_pub = rospy.Publisher('/waypoint', Int64, queue_size = 1)
-
-
+    
         # Subscriber
         rospy.Subscriber("/gps", GPSMessage, self.gpsCB) ## Vehicle Status Subscriber 
         rospy.Subscriber("/yaw", Float64, self.yawCB) ## Vehicle Status Subscriber 
         rospy.Subscriber("/traffic_light", Int64, self.trafficCB)
         rospy.Subscriber("/cam_steer", CtrlCmd, self.laneCB) # Drive for camera
-        rospy.Subscriber("/curve_cmd", CtrlCmd, self.curveCB) # curve Mission
         
         self.steering_angle_to_servo_offset = 0.0 ## servo moter offset
         self.target_x = 0.0
@@ -88,12 +84,6 @@ class PurePursuit():
         self.clear_stop_mission = False
         self.clear_start_mission = False
 
-        self.passed_curve = False
-        self.curve_servo_msg = 0.0
-        self.curve_motor_msg = 0.0
-
-        self.Mission = "line_drive"
-
         
 
         ######## For Service ########
@@ -123,10 +113,7 @@ class PurePursuit():
                                            
         while not rospy.is_shutdown():
 
-            self.Mission = "line_drive"
-
             self.accel_msg = 0
-            
             
             ## global_path와 WeBot status_msg를 이용해 현재 waypoint와 local_path를 생성
             local_path, current_waypoint, = findLocalPath(self.global_path, self.longitude, self.latitude)
@@ -136,41 +123,32 @@ class PurePursuit():
 
             self.steering, self.target_x, self.target_y = pure_pursuit.steering_angle()
 
-            # waypoint 출력
-            # print(self.path_name, current_waypoint, len(self.global_path.poses))
-            self.waypoint_pub.publish(current_waypoint)
-
 
         ################# 일반 주행 조향값 및 속도 설정 ##################################
 
-            # 조향 값 확인 : rostopic echo /sensors/s            # cv2.imshow("curve_slide_img", self.slide_img)
-            # cv2.imshow("curve", self.curve_img)
-
-
-            # cv2.imshow("original", cv2_image)ervo_position_command -> data
+            # 조향 값 확인 : rostopic echo /sensors/servo_position_command -> data
             # range : 0.0 ~ 1.0 (straight 0.5)
             self.servo_msg = self.steering*self.steering_offset #+ self.steering_angle_to_servo_offset
-            self.motor_msg = 18.0 - min(10, abs(self.servo_msg * 20)) # steering에 따른 속도
+            self.motor_msg = 17.0 - min(12, abs(self.servo_msg * 20)) # steering에 따른 속도
             self.brake_msg = 0
             self.ctrl_cmd_msg.longlCmdType = 2
 
-
         ################################### 출발 미션 ###################################
 
-            if  current_waypoint <= 45 and self.path_name == 'test_path_first':
-                print("START MISSION", current_waypoint)
+            if  current_waypoint <= 40 and self.path_name == 'test_path_first':
+                print("START MISSION")
                 self.drive_left_light()
-            elif self.path_name == 'test_path_first' and current_waypoint <= 55  and self.clear_start_mission == False:
+            elif self.path_name == 'test_path_first' and current_waypoint <= 50  and self.clear_start_mission == False:
                 self.drive_mode()
                 self.clear_start_mission = True
 
         ################################### 종료 미션 ###################################
 
             if  730 <= current_waypoint <= 759 and self.path_name == 'test_path_second':
-                print("FINISH MISSION", current_waypoint)
+                print("FINISH MISSION")
                 self.drive_right_light()
             elif self.path_name == 'test_path_second' and current_waypoint >= 765 :
-                print("parking", current_waypoint)
+                print("parking")
                 # for i in range(1000) :
                 self.brake()
                 self.publishCtrlCmd(self.motor_msg, self.servo_msg, self.brake_msg)
@@ -179,100 +157,73 @@ class PurePursuit():
 
         ################################### 정지 미션 ###################################
 
-            # 오르막길 일 때는 악셀 밟기
-            if 100 <= current_waypoint <= 125 and self.path_name == 'test_path_first' :
-                print("Hill accel", current_waypoint)
-                # self.ctrl_cmd_msg.longlCmdType = 1
-                # self.ctrl_cmd_msg.accel = 1
-                # self.ctrl_cmd_msg.acceleration = 1
-                self.motor_msg = 18
-
-            if 133 <= current_waypoint <= 136 and self.path_name == 'test_path_first' and self.clear_stop_mission == False:
-                self.ctrl_cmd_msg.accel = 0
-                self.ctrl_cmd_msg.acceleration = 0
-                print("STOP MISSION", current_waypoint)
+            if 103 <= current_waypoint <= 106 and self.path_name == 'test_path_first' and self.clear_stop_mission == False:
+                print("STOP MISSION")
                 self.brake()
                 self.publishCtrlCmd(self.motor_msg, self.servo_msg, self.brake_msg)
                 self.clear_stop_mission = True
-                rospy.sleep(3.3) # 3.3초 동안 정지
+                rospy.sleep(5)
 
-        ################################### 가속 미션 ################mission####################
+        ############################ 가속 미션 ##########################################
 
-            if self.path_name == 'test_path_second' and 400 <= current_waypoint <= 425 :
-                self.Mission = "ACCEL_MISSION"
-                print("ACCEL MISSION_1", current_waypoint)
-                self.motor_msg = 18
-                self.ctrl_cmd_msg.longlCmdType = 2
+            if self.path_name == 'test_path_second' and 410 <= current_waypoint <= 425 :
+                print("ACCEL MISSION_1")
+                self.motor_msg = 19
+                self.ctrl_cmd_msg.longlCmdType = 1
                 self.publishCtrlCmd(self.motor_msg, self.servo_msg, self.brake_msg)
-                continue
             elif self.path_name == 'test_path_second' and 425 <= current_waypoint <= 460 :
-                self.Mission = "ACCEL_MISSION"
-                print("ACCEL MISSION_2", current_waypoint)
+                print("ACCEL MISSION_2")
                 self.ctrl_cmd_msg.longlCmdType = 1
                 self.ctrl_cmd_msg.accel = 1
                 self.ctrl_cmd_msg.acceleration = 5
                 self.motor_msg = 30
                 self.servo_msg /= 5
                 self.publishCtrlCmd(self.motor_msg, self.servo_msg, self.brake_msg)
-                continue
             elif self.path_name == 'test_path_second' and 461 <= current_waypoint <= 490 :
-                self.Mission = "ACCEL_MISSION"
-                print("ACCEL MISSION_3", current_waypoint)
+                print("ACCEL MISSION_3")
                 self.ctrl_cmd_msg.longlCmdType = 1
                 self.ctrl_cmd_msg.accel = 0
                 self.ctrl_cmd_msg.acceleration = 0
                 self.motor_msg = 17
                 self.servo_msg /= 5
                 self.publishCtrlCmd(self.motor_msg, self.servo_msg, self.brake_msg)
-                continue
 
         ############################# ㄱ자 미션 #########################################
-            ### gps blackout 크기 바꿔가면서 주행
-            ### 진입할 때 다양한 각도로 진입하면서 주행 테스트 할 것 
-            ####### 방법 1 카메라, IMU 사용하여 주행 #####
+            ####### 방법 1 카메라를 사용하여 주행 #####
             if self.path_name == 'test_path_first' :
-                self.Mission = "CURVE MISSION"
                 if 310 <=current_waypoint <= 350 :
-                    # print("CURVE MISSION_START", current_waypoint)
+                    print("CURVE MISSION_START")
                     self.motor_msg = 5
                 if self.original_latitude <= 1.0 and self.original_longitude <= 1.0 and self.passed_curve == False:
-                    # print(self.yaw)
-                    # print("CURVE MISSION")
+                    print("CURVE_MISSION")
                     self.servo_msg = self.curve_servo_msg
                     self.motor_msg = self.curve_motor_msg
                 if 500 <= current_waypoint <= 503:
                     self.passed_curve = True
 
+                
+
         ############################# S자 미션  ##########################################
-            ####### 방법 1 카메라를 사용하여 주행 #####
 
             ####### s자 미션 진입식 속도 줄이기 #######
-            if self.path_name == 'test_path_first' and self.passed_curve == True:
-                if 680 <=current_waypoint <= 830 :
-                    print("S MISSION_START", current_waypoint)
-                    self.motor_msg = 6
+            if self.path_name == 'test_path_first' and 650 <=current_waypoint <= 800 :
+                print("S MISSION_START")
+                self.motor_msg = 6
 
             ####### gps 안 들어 올때 카메라로 계산한 steering으로 주행 ##################
-                if self.original_latitude <= 1.0 and self.original_longitude <= 1.0 and current_waypoint > 530 :
-                    self.Mission = "S_MISSION"
-                    print("S_MISSION", current_waypoint)
-                    self.servo_msg = self.camera_servo_msg
-                    self.motor_msg = 15 - min(10, abs(self.camera_servo_msg*20))
+
+            if self.original_latitude <= 1.0 and self.original_longitude <= 1.0 and current_waypoint > 500:
+                print("S_MISSION")
+                self.servo_msg = self.camera_servo_msg
+                self.motor_msg = 15 - min(10, abs(self.camera_servo_msg*20))
                 
                 # print(self.camera_servo_msg, self.camera_motor_msg)
-
-            ####### 방법 2 x  #######
-        
-
-            ###### 방법 3 Lidar 센서, camera 센서 활용 Lidar로 보정
-
 
         #################### T자 미션 전용 조향값 및 속도 설정 #############################
 
             # 후진 할 때는 조향값 반대, 속도는 느리게
             if self.path_name == 'test_path_1' or self.path_name == 'test_path_2' or self.path_name == 'test_path_3' :
-                print("T MISSION", current_waypoint)
-                self.Mission = "T MISSION"
+                print("T MISSION")
                 self.steering_offset = 0.03
                 self.motor_msg = 5
                 if (self.path_name == 'test_path_1' and current_waypoint + 70 >= len(self.global_path.poses)) or (self.path_name == 'test_path_3' and current_waypoint <= 100) : 
@@ -287,7 +238,7 @@ class PurePursuit():
                 self.motor_msg = 1
 
 
-        ############################## 방법 1 Path switching   #####################################
+        ############################## Path switching   #####################################
 
 
             # print(current_waypoint, len(self.global_path.poses))
@@ -324,10 +275,6 @@ class PurePursuit():
                     self.global_path = path_reader.read_txt(self.path_name+".txt")
                     self.is_swith_path = False
     
-
-        #################################### 방법 2 후방 카메라를 통한 주차 ###############################
-            
-            # print(current_waypoint)
                 
         ################################ 신호등 ##########################################################
 
@@ -357,9 +304,12 @@ class PurePursuit():
             if self.path_name == 'test_path_second' and 130 < current_waypoint <= 150 :
                 self.drive_mode()
 
+        ###################################################################################################
+
+
 
             self.publishCtrlCmd(self.motor_msg, self.servo_msg, self.brake_msg)
-            self.mission_pub.publish(self.Mission)
+
             
             # global path 출력
             if count==300 : 
@@ -410,12 +360,7 @@ class PurePursuit():
         self.req.lamps.emergencySignal = 1
         response = self.req_service(self.req)
 
-    def parking(self) :
-        self.req.option = 6
-        self.req.gear = 1
-        self.req.lamps.turnSignal = 0
-        response = self.req_service(self.req)
-
+    
     def brake(self) :
         self.ctrl_cmd_msg.longlCmdType = 1
         self.motor_msg = 0.0
@@ -456,10 +401,7 @@ class PurePursuit():
         # print(msg)
         self.camera_servo_msg = msg.steering
         self.camera_motor_msg = msg.velocity
-
-    def curveCB(self, msg) :
-        self.curve_servo_msg = msg.steering
-        self.curve_motor_msg = msg.velocity
+        # self.ctrl_cmd_pub.publish(self.ctrl_cmd_msg)
 
 
         

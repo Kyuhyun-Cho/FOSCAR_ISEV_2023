@@ -44,6 +44,8 @@
 #include <geometry_msgs/PoseArray.h>
 
 #include <std_msgs/Bool.h>
+#include <std_msgs/Int64MultiArray.h>
+#include <std_msgs/Float64MultiArray.h>
 
 #include <obstacle_detection/Boundingbox.h>
 #include <obstacle_detection/ObjectInfo.h>
