@@ -2,7 +2,8 @@
 
 ## 대회 소개
 
-![Untitled](https://github.com/FOSCAR-2022/ISEV_2023_OB/assets/39543006/ae680baa-0c6d-4b13-8389-50de0b949b43)
+![포스터](https://user-images.githubusercontent.com/39543006/238260322-1ac3730b-d23c-45dd-9149-8efeb9e6c975.png)
+
 
 ## 대회 결과
 
