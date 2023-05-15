@@ -62,7 +62,7 @@ class Controller() :
 
         # For test
         self.motor_msg = 5.0
-        rate = rospy.Rate(20) # 30hz
+        rate = rospy.Rate(30) # 30hz
         while not rospy.is_shutdown():
             # self.ctrl_cmd_pub = rospy.Publisher('/ctrl_cmd', CtrlCmd, queue_size=1)
             self.ctrl_cmd_pub = rospy.Publisher('/cam_steer', CtrlCmd, queue_size=1)
@@ -85,11 +85,11 @@ class Controller() :
 
     def mission_callback(self, msg) :
         self.mission = msg.data
-        # #print('lane CB', self.mission)
+        # print('lane CB', self.mission)
 
     def waypointCB(self, msg) :
         self.waypoint = msg.data
-        # #print('way', self.waypoint)
+        # print('way', self.waypoint)
         
         
     def gpsCB(self, msg): 
@@ -109,7 +109,7 @@ class Controller() :
 
 
     def image_callback(self, _data) :
-        # #print(type(_data))
+        # print(type(_data))
         # if self.initialized == False:
         #     cv2.namedWindow("Simulator_Image", cv2.WINDOW_NORMAL) 
         #     cv2.createTrackbar('low_H', 'Simulator_Image', 50, 255, nothing)
@@ -123,7 +123,7 @@ class Controller() :
     
 
         if (self.original_longitude  <= 1 and self.original_latitude <=  1 and self.mission == True) or  (905 <= self.waypoint <=  990):
-            #print('lane')
+            print('lane')
 
             cv2_image = self.bridge.compressed_imgmsg_to_cv2(_data)
             # cv2.imshow("original", cv2_image)
@@ -164,9 +164,9 @@ class Controller() :
             # cv2.circle(cv2_image, (480, 300),5,(255,255,0),5)
             # cv2.circle(cv2_image, (640, 450),5,(0,255,255),5)
 
-            # #print(cv2_image)
+            # print(cv2_image)
             self.slide_img, self.slide_x_location, self.current_lane_window = self.slidewindow.slidewindow(warper_image, self.yaw)
-            # cv2.imshow("slide_img", self.slide_img)
+            cv2.imshow("slide_img", self.slide_img)
             
 
             gray_image = cv2.cvtColor(cv2_image, cv2.COLOR_BGR2GRAY)
@@ -188,8 +188,8 @@ class Controller() :
             warper_s = self.warper.warp(s_img)
 
             self.curve_img, self.angle = self.slidewindow.curve(warper_s)
-            # #print("angle", self.angle)
-            # cv2.imshow("out", self.curve_img)
+            # print("angle", self.angle)
+            cv2.imshow("out", self.curve_img)
 
 
 
@@ -203,16 +203,16 @@ class Controller() :
             # cv2.imshow("warper", warper_s)
             # cv2.waitKey(1)
         
-            # #print("success")
+            # print("success")
             # try :
             #     cv2_image = self.bridge.compressed_imgmsg_to_cv2(_data)
             #     # cv2_image = self.bridge.imgmsg_to_cv2(_data)
             #     cv2_image = self.bridge.cv2_to_imgmsg(cv2_image, encoding="bgr8")
             #     # self.original_img = cv2_image
             #     cv2.imshow("original", cv2_image)
-            #     #print("success")
+            #     print("success")
             # except :
-            #     #print("fail")
+            #     print("fail")
             #     pass
 
 
@@ -228,11 +228,14 @@ class Controller() :
             else:
                 self.motor_msg = 5 
                 self.steering_val = self.error_lane * 0.001
-
-            if self.yaw < -25 and abs(self.angle) <= 75 :
-                #print("####################")
-                self.motor_msg = 3
-                self.steering_val = (90 - abs(self.angle))*-0.7
+            
+            print('angle', abs(self.angle))
+            if self.yaw < -20 and abs(self.angle) <= 73 :
+                # print("####################")
+                # self.motor_msg = 5
+                self.steering_val = (90 - abs(self.angle))  * -0.02
+            elif self.angle >= 500:
+                self.motor_msg = 10
 
         # self.camera_steering_pub.publish(self.steering_val)
 
@@ -254,3 +257,4 @@ def nothing(x):
 
 if __name__ == "__main__":
     control = Controller()
+ 

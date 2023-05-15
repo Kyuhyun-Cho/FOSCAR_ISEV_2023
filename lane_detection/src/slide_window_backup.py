@@ -15,6 +15,8 @@ class SlideWindow:
     def __init__(self):
 
         # Publisher
+
+
         self.current_line = "DEFAULT"
         self.left_fit = None
         self.right_fit = None
@@ -29,11 +31,7 @@ class SlideWindow:
 
     def curve(self, img) :
         ## 수평선 상자
-        # pwin_h1 = 300
-        # pwin_h2 = 350
-        # pwin_l = 100
-        # pwin_r = 580
-        curve_img = img[360:470, 240:400] # 360
+        curve_img = img[360:470, 240:320] # 358
         edges = cv2.Canny(curve_img, 50, 150)
         # lines = cv2.HoughLines(edges,1,np.pi/180, 100)
         rho = 1
@@ -62,10 +60,10 @@ class SlideWindow:
             pass
 
         return curve_img, angle
-        
 
 
-    def slidewindow(self, img, steering, turn_left):
+
+    def slidewindow(self, img, yaw):
 
         x_location = 320.0
         # init out_img, height, width        
@@ -73,7 +71,7 @@ class SlideWindow:
         # out_img = img # added 
         height = img.shape[0]
         width = img.shape[1]
-        yaw = steering
+        yaw = yaw
 
         # num of windows and init the height
         window_height = 15 # 7
@@ -92,13 +90,12 @@ class SlideWindow:
         right_lane_inds = []
 
         win_h1 = 370
-        win_h2 = 465
-        win_l_w_l = 130 
-        win_l_w_r = 250 
-        win_r_w_l = 430 
-        win_r_w_r = 550 
-
-
+        win_h2 = 480
+        win_l_w_l = 100
+        win_l_w_r = 280
+        win_r_w_l = 400
+        win_r_w_r = 580
+        
         # first location and segmenation location finder
         # draw line
         # 130 -> 150 -> 180
@@ -126,20 +123,16 @@ class SlideWindow:
         # if minpix is enough on left, draw left, then draw right depends on left
         # else draw right, then draw left depends on right
 
-        if len(good_left_inds) >= 50 and turn_left == 2:
-            self.current_line = "LEFT"
-            line_flag = 1
-            x_current = int(np.mean(nonzerox[good_left_inds]))
-            y_current = int(np.mean(nonzeroy[good_left_inds]))
-            max_y = y_current
-
-        elif yaw <- 20 and len(good_right_inds) >= 50 and turn_left == 0:
+        # print(len(good_left_inds), len(good_right_inds))
+        print( yaw)
+        if yaw <= -20 and len(good_right_inds) >= 50 :
             self.current_line = "RIGHT"
             line_flag = 2
             # x_current = nonzerox[good_right_inds[np.argmax(nonzeroy[good_right_inds])]]
             x_current = int(np.mean(nonzerox[good_right_inds]))
             y_current = int(np.max(nonzeroy[good_right_inds]))
-        elif len(good_left_inds) > len(good_right_inds):            
+        elif len(good_left_inds) > len(good_right_inds): 
+            # print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')          
             self.current_line = "LEFT"
             line_flag = 1
             x_current = int(np.mean(nonzerox[good_left_inds]))
@@ -155,6 +148,7 @@ class SlideWindow:
             x_current = int(np.mean(nonzerox[good_right_inds]))
             y_current = int(np.max(nonzeroy[good_right_inds]))
         else:
+            print("Cant SEE!!!!")
             self.current_line = "MID"
             line_flag = 3   
 
@@ -167,7 +161,7 @@ class SlideWindow:
         elif line_flag == 2:
             for i in range(len(good_right_inds)):
                     img = cv2.circle(out_img, (nonzerox[good_right_inds[i]], nonzeroy[good_right_inds[i]]), 1, (255,0,0), -1)
-        print(self.current_line)
+            
         # window sliding and draw
         for window in range(0, nwindows):
             if line_flag == 1: 
@@ -194,7 +188,7 @@ class SlideWindow:
                 if win_y_low >= 338 and win_y_low < 348:
                     # print("x: ", x_current)
                 # 0.165 is the half of the road(0.33)
-                    x_location = x_current + int(width * 0.24) - 20
+                    x_location = x_current + int(width * 0.24) + 7
                     self.x_previous = x_location
                     cv2.circle(out_img, (x_location, 340), 10, (0, 0, 255), 5)
 
@@ -216,12 +210,12 @@ class SlideWindow:
                 if win_y_low >= 338 and win_y_low < 348:
                     # print("x: ", x_current)
                 # 0.165 is the half of the road(0.33)
-                    x_location = x_current - int(width * 0.24) + 20
+                    x_location = x_current - int(width * 0.24) -7 
                     self.x_previous = x_location
                     cv2.circle(out_img, (x_location, 340), 10, (0, 0, 255), 5)
 
             else : # can't see
-                # print("Cant SEE!!!!")
+                print("Cant SEE!!!!")
                 x_location = self.x_previous
                 cv2.circle(out_img, (x_location, 340), 10, (0, 0, 255), 5)
 
@@ -232,14 +226,5 @@ class SlideWindow:
 
             left_lane_inds.extend(good_left_inds)
 
-            # print("XXXXXXX : :  ",x_location)
-
-        
-
-
-
-
-        
-        cv2.circle(out_img, (320, 340), 10, (0, 255, 0),1)
 
         return out_img, x_location, self.current_line

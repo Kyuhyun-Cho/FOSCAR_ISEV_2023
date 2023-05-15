@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
     <!-- <node pkg="pure_pursuit" type="get_yaw_from_imu.py" name="get_yaw_from_imu"/> -->
-    <node pkg="pure_pursuit" type="pure_pursuit.py" name="pure_pursuit" output="screen"/>
+    <node pkg="pure_pursuit" type="faster_pure_pursuit.py" name="pure_pursuit" output="screen"/>
 
     <!-- 차선 및 충돌 기록 -->
     <!-- <node pkg="pure_pursuit" type="scoring.py" name="scoring" output="screen"/> -->
 
 
     <include file="$(find traffic_sign)/launch/traffic_sign.launch" />
-    <include file="$(find lane_detection)/launch/lane_detection.launch" />
-    <include file="$(find lane_detection)/launch/curve_detection.launch" />
+    <include file="$(find lane_detection)/launch/lane_detection_faster.launch" />
+    <include file="$(find lane_detection)/launch/curve_detection_faster.launch" />
     <include file="$(find obstacle_detection)/launch/dy_obstacle_detection.launch" />
 </launch>

@@ -5,7 +5,7 @@ import cv2
 import rospy
 import numpy as np
 from warper import Warper
-from slide_window import SlideWindow
+from slide_window_faster import SlideWindow
 
 
 ### 

@@ -106,8 +106,6 @@ find_package(PCL 1.2 REQUIRED)
 
 generate_dynamic_reconfigure_options(
   cfg/hyper_parameter.cfg
-  cfg/tr_hyper_parameter.cfg
-  cfg/wp_hyper_parameter.cfg
 )
 
 ################################################
@@ -166,16 +164,9 @@ include_directories(
 add_executable(dy_obstacle_detection src/dy_obstacle_detection.cpp)
 target_link_libraries(dy_obstacle_detection ${catkin_LIBRARIES})
 
-add_executable(track_obstacle_detection src/track_obstacle_detection.cpp)
-target_link_libraries(track_obstacle_detection ${catkin_LIBRARIES})
-
-add_executable(waypoint_maker src/waypoint_maker.cpp)
-target_link_libraries(waypoint_maker ${catkin_LIBRARIES})
-
-
 add_dependencies(dy_obstacle_detection ${PROJECT_NAME}_gencfg)
-add_dependencies(track_obstacle_detection ${PROJECT_NAME}_gencfg)
-add_dependencies(waypoint_maker ${PROJECT_NAME}_gencfg)
+
+# add_dependencies(waypoint_maker ${PROJECT_NAME}_gencfg)
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries

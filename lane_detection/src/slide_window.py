@@ -31,7 +31,7 @@ class SlideWindow:
 
     def curve(self, img) :
         ## 수평선 상자
-        curve_img = img[370:470, 240:400] # 358
+        curve_img = img[390:470, 240:300] # 358
         edges = cv2.Canny(curve_img, 50, 150)
         # lines = cv2.HoughLines(edges,1,np.pi/180, 100)
         rho = 1
@@ -89,12 +89,12 @@ class SlideWindow:
         left_lane_inds = []
         right_lane_inds = []
 
-        win_h1 = 370
-        win_h2 = 480
-        win_l_w_l = 100
-        win_l_w_r = 280
-        win_r_w_l = 400
-        win_r_w_r = 580
+        win_h1 = 380
+        win_h2 = 465
+        win_l_w_l = 120
+        win_l_w_r = 260
+        win_r_w_l = 380
+        win_r_w_r = 540
         
         # first location and segmenation location finder
         # draw line
@@ -124,8 +124,8 @@ class SlideWindow:
         # else draw right, then draw left depends on right
 
         # print(len(good_left_inds), len(good_right_inds))
-
-        if yaw <- 20 and len(good_right_inds) >= 50 :
+        # print('yaw',yaw)
+        if yaw <- 40 and len(good_right_inds) >= 70 :
             self.current_line = "RIGHT"
             line_flag = 2
             # x_current = nonzerox[good_right_inds[np.argmax(nonzeroy[good_right_inds])]]
@@ -189,7 +189,7 @@ class SlideWindow:
                     # print("x: ", x_current)
                 # 0.165 is the half of the road(0.33)
                     x_location = x_current + int(width * 0.24) + 7
-                    self.x_previous = x_location
+                    # self.x_previous = x_location
                     cv2.circle(out_img, (x_location, 340), 10, (0, 0, 255), 5)
 
             elif line_flag == 2: # change line from left to right above(if)
@@ -211,8 +211,10 @@ class SlideWindow:
                     # print("x: ", x_current)
                 # 0.165 is the half of the road(0.33)
                     x_location = x_current - int(width * 0.24) 
-                    self.x_previous = x_location
+                    # self.x_previous = x_location
                     cv2.circle(out_img, (x_location, 340), 10, (0, 0, 255), 5)
+            
+
 
             else : # can't see
                 print("Cant SEE!!!!")
@@ -224,14 +226,25 @@ class SlideWindow:
                 x_location = self.x_previous
                 cv2.circle(out_img, (x_location, 340), 10, (0, 0, 255), 5)
 
-            left_lane_inds.extend(good_left_inds)
+            # print('previous', self.x_previous, 'location', x_location)
+            # print(abs(self.x_previous - x_location))
+            # print('previous', self.x_previous, 'location', x_location)
+            # if (abs(self.x_previous - x_location) > 0) :
+            #     print ("GAP: ", abs(self.x_previous - x_location))
+                # print('previous', self.x_previous, 'location', x_location)
 
-        
+            # if abs(self.x_previous - x_location) >= 100 :
+            #     print ("GAP: ", abs(self.x_previous - x_location))
+            #     x_location = 320
+            #     self.x_previous = x_location
+            # else :
+            #     self.x_previous = x_location
+            # print('previous', self.x_previous, 'location', x_location)
+            # left_lane_inds.extend(good_left_inds)
+            # right_lane_inds.extend(good_right_inds)
+            self.x_previous = x_location
 
-
-
-
-        
+            # print(x_location)
 
 
         return out_img, x_location, self.current_line

@@ -49,13 +49,13 @@
 
 #include <obstacle_detection/Boundingbox.h>
 #include <obstacle_detection/ObjectInfo.h>
-#include <obstacle_detection/Waypoint.h>
+// #include <obstacle_detection/Waypoint.h>
 
 #include <dynamic_reconfigure/server.h>
 
 #include "obstacle_detection/hyper_parameterConfig.h"
-#include "obstacle_detection/tr_hyper_parameterConfig.h"
-#include "obstacle_detection/wp_hyper_parameterConfig.h"
+// #include "obstacle_detection/tr_hyper_parameterConfig.h"
+// #include "obstacle_detection/wp_hyper_parameterConfig.h"
 
 
 #endif // HEADER_H

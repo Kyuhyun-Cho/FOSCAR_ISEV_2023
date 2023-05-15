@@ -33,7 +33,7 @@ class SlideWindow:
         # pwin_h2 = 350
         # pwin_l = 100
         # pwin_r = 580
-        curve_img = img[360:470, 240:400] # 360
+        curve_img = img[332:470, 240:400] # 335 / 240
         edges = cv2.Canny(curve_img, 50, 150)
         # lines = cv2.HoughLines(edges,1,np.pi/180, 100)
         rho = 1

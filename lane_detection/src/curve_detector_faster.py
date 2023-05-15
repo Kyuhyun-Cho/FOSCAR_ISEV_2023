@@ -5,7 +5,7 @@ import cv2
 import rospy
 import numpy as np
 from warper import Warper
-from curve_slide_window import SlideWindow
+from curve_slide_window_faster import SlideWindow
 
 
 ### 

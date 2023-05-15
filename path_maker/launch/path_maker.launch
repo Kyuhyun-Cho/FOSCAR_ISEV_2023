@@ -1,11 +1,11 @@
 <launch>
 	<!-- args = "(경로가 생성되는 폴더 이름) (생성할 경로의 파일 이름)" -->
-	<!-- <node pkg="path_maker" type="path_maker_utmk.py" name="maker" args="path test_path_first" output="screen" /> -->
-	<!-- <node pkg="path_maker" type="path_maker_utmk.py" name="maker" args="path test_path_1" output="screen" /> -->
-	<!-- <node pkg="path_maker" type="path_maker_utmk.py" name="maker" args="path test_path_2" output="screen" /> -->
-	<!-- <node pkg="path_maker" type="path_maker_utmk.py" name="maker" args="path test_path_3" output="screen" /> -->
-	<!-- <node pkg="path_maker" type="path_maker_utmk.py" name="maker" args="path test_path_4" output="screen" /> -->
-	<!-- <node pkg="path_maker" type="path_maker_utmk.py" name="maker" args="path test_path_5" output="screen" /> -->
+	<!-- <node pkg="path_maker" type="path_maker_utmk.py" name="maker" args="path first" output="screen" /> -->
+	<!-- <node pkg="path_maker" type="path_maker_utmk.py" name="maker" args="path parking_1" output="screen" /> -->
+	<!-- <node pkg="path_maker" type="path_maker_utmk.py" name="maker" args="path parking_2" output="screen" /> -->
+	<!-- <node pkg="path_maker" type="path_maker_utmk.py" name="maker" args="path parking_3" output="screen" /> -->
+	<!-- <node pkg="path_maker" type="path_maker_utmk.py" name="maker" args="path parking_4" output="screen" /> -->
+	<!-- <node pkg="path_maker" type="path_maker_utmk.py" name="maker" args="path second" output="screen" /> -->
 	<node pkg="path_maker" type="path_maker_utmk.py" name="maker" args="path tmp" output="screen" />
 	<!-- <node pkg="path_maker" type="path_maker_utmk.py" name="maker" args="path test_path_second" output="screen" /> -->
 	<!-- <node pkg="path_maker" type="path_maker_utmk.py" name="maker" args="path final_path_second" output="screen" /> -->

@@ -31,8 +31,8 @@ class PurePursuit():
     def __init__(self):
         rospy.init_node('pure_pursuit', anonymous=True)
 
-        self.path_name = 'first'
-        # self.path_name = 'second'
+        self.path_name = 'first_faster'
+        # self.path_name = 'second_faster'
 
         self.passed_curve = False
 
@@ -92,6 +92,7 @@ class PurePursuit():
 
         self.dynamic_flag = False
         self.dynamic_done = False
+        # self.dynamic_done = True
 
         self.curve_servo_msg = 0.0
         self.curve_motor_msg = 0.0
@@ -176,12 +177,12 @@ class PurePursuit():
 
             self.ctrl_cmd_msg.longlCmdType = 2
             self.servo_msg = self.steering*self.steering_offset #+ self.steering_angle_to_servo_offset
-            self.motor_msg = 19.0
+            self.motor_msg = 19.75
             self.brake_msg = 0
 
         ###################################################################### 출발 미션 ###################################################################### 
 
-            if self.path_name == 'first':
+            if self.path_name == 'first_faster':
                 if  current_waypoint <= 72:
                     self.setServoMsgWithLfd(8)
                     self.servo_msg /= 10
@@ -193,9 +194,9 @@ class PurePursuit():
 
         ###################################################################### 오르막길 정지 미션 ######################################################################
 
-            if self.path_name == 'first':
+            if self.path_name == 'first_faster':
                 if 81 <= current_waypoint <= 165: # 오르막길 엑셀 밟기
-                    self.setMotorMsgWithVel(19)
+                    self.setMotorMsgWithVel(19.5)
 
                 if 163 <= current_waypoint <= 170 and self.clear_stop_mission == False:
                     self.ctrl_cmd_msg.accel = 0
@@ -204,15 +205,15 @@ class PurePursuit():
 
                     self.publishCtrlCmd(self.motor_msg, self.servo_msg, self.brake_msg)
                     self.clear_stop_mission = True
-                    rospy.sleep(4) # 4초 동안 정지
+                    rospy.sleep(3.3) # 3.5초 동안 정지
                     continue
 
         ###################################################################### 직각 코스 미션 ######################################################################
 
-            if self.path_name == 'first':
+            if self.path_name == 'first_faster':
                 if self.original_latitude <= 1.0 and self.original_longitude <= 1.0 and self.passed_curve == False :
-                    self.motor_msg = self.curve_motor_msg
-                    self.servo_msg = self.curve_servo_msg
+                    self.motor_msg = self.curve_motor_msg + 3
+                    self.servo_msg = self.curve_servo_msg * 1.2
                     self.publishCtrlCmd(self.motor_msg, self.servo_msg, self.brake_msg)
                     continue
                     # #print("CURVE")
@@ -222,29 +223,28 @@ class PurePursuit():
                     # #print("CURVE_START")
                     self.setMotorMsgWithVel(12)
                     self.setServoMsgWithLfd(3)
-                    self.passed_curve = False
                     
 
                 elif 331 <= current_waypoint <= 400 :  # 직각 코스 진입 Slow Down
                     # #print("CURVE_SLOW")
-                    self.setMotorMsgWithVel(5)
-                    self.setServoMsgWithLfd(3)
+                    self.setMotorMsgWithVel(13)
+                    self.setServoMsgWithLfd(4)
 
                 if 450 <= current_waypoint <=  499 : # 직각 코스 종료 jikhu Slow Down
                     # #print("FINSH_CURVE")
-                    self.setMotorMsgWithVel(9)
+                    self.setMotorMsgWithVel(15)
                     self.setServoMsgWithLfd(12)
                     self.passed_curve = True # 임시              
                     
                 if 500 <= current_waypoint <=  555 : # 직각 코스 종료 Slow Down
                     # #print("FINSH_CURVE")
-                    self.setMotorMsgWithVel(12)
-                    self.setServoMsgWithLfd(3)
+                    self.setMotorMsgWithVel(15)
+                    self.setServoMsgWithLfd(4)
                     self.passed_curve = True # 임시
 
-                if 556 <= current_waypoint <=  590 : # 직각 코스 종료 및 첫번째 신호등 전 Slow Down
+                if 556 <= current_waypoint <=  584 : # 직각 코스 종료 및 첫번째 신호등 전 Slow Down
                     # #print("FINSH_CURVE")
-                    self.setMotorMsgWithVel(12)
+                    self.setMotorMsgWithVel(15)
                     self.setServoMsgWithLfd(12)
 
                 # if 597 <= current_waypoint :
@@ -252,13 +252,13 @@ class PurePursuit():
 
         # ###################################################################### S자 코스 미션  ######################################################################
 
-        #     if self.path_name == 'first' :
+        #     if self.path_name == 'first_faster' :
         #         if 746 <= current_waypoint <= 820 : # S자 코스 진입 Slow down
         #             self.passed_curve = True
         #             self.setMotorMsgWithVel(6)
         #             self.setServoMsgWithLfd(3)
 
-        #     if self.path_name == 'first' and self.passed_curve == True :
+        #     if self.path_name == 'first_faster' and self.passed_curve == True :
         #         # #print(self.yaw)
         #         if self.original_latitude <= 1.0 and self.original_longitude <= 1.0 and self.passed_curve : # GPS 음영구역 진입 시 Camera Steering으로 주행
         #             self.setMotorMsgWithVel(15 - min(7, abs(self.camera_servo_msg*20)))
@@ -296,19 +296,20 @@ class PurePursuit():
         #         #     self.setMotorMsgWithVel(3)
         #         #     self.setServoMsgWithLfd(3)
     ###################################################################### S자 코스 미션  ######################################################################
-                if self.path_name == 'first' and 746 <= current_waypoint <= 820 : # S자 코스 진입 Slow down
-                        self.setMotorMsgWithVel(6)
+                if self.path_name == 'first_faster' and 746 <= current_waypoint <= 820 : # S자 코스 진입 Slow down
+                        self.setMotorMsgWithVel(12)
                         self.setServoMsgWithLfd(3)
                         self.passed_curve = True
-                if self.path_name == 'first' and self.passed_curve == True :
+                if self.path_name == 'first_faster' and self.passed_curve == True :
                     print(self.yaw)
                     if self.original_latitude <= 1.0 and self.original_longitude <= 1.0 and self.passed_curve : # GPS 음영구역 진입 시 Camera Steering으로 주행
-                        self.setMotorMsgWithVel(15 - min(7, abs(self.camera_servo_msg*20)))
+                        self.setMotorMsgWithVel(19 - min(10, abs(self.camera_servo_msg*10)))
                         self.servo_msg = self.camera_servo_msg
                         if self.yaw < -25 : # -25 -> answer
+                            self.setMotorMsgWithVel(9)
+                        if -51 < self.yaw < -20:
                             self.setMotorMsgWithVel(6)
-                        if -80 < self.yaw < -20:
-                            print("yaw: ", self.yaw)
+                            print("@@@@@@@@@@@@@@@")
                             self.servo_msg = self.camera_servo_msg
                             self.servo_msg *= 2
                         self.publishCtrlCmd(self.motor_msg, self.servo_msg, self.brake_msg)
@@ -318,8 +319,8 @@ class PurePursuit():
 
                     if 690 <= current_waypoint <= 745 : # S자 코스 진입 Slow down
                         self.passed_curve = True
-                        self.setMotorMsgWithVel(12)
-                        self.setServoMsgWithLfd(3)
+                        self.setMotorMsgWithVel(15)
+                        self.setServoMsgWithLfd(5)
                         
                     # elif 746 <= current_waypoint <= 820 : # S자 코스 진입 Slow down
                     #     self.setMotorMsgWithVel(6)
@@ -334,7 +335,7 @@ class PurePursuit():
                         if -80 < self.yaw < -20:
                             # print("@@@@@@@@@@@@@@@")
                             self.servo_msg = self.camera_servo_msg
-                            self.servo_msg *= 2
+                            self.servo_msg *= 3
                         self.Mission = "S_MISSION"
                         self.publishCtrlCmd(self.motor_msg, self.servo_msg, self.brake_msg)
                         # #print("S_MISSION_FINSH")
@@ -347,34 +348,34 @@ class PurePursuit():
                 self.path_name == 'parking_2' or 
                 self.path_name == 'parking_4'):
 
-                self.setMotorMsgWithVel(8)
-                self.setServoMsgWithLfd(5)
+                self.setMotorMsgWithVel(9)
+                self.setServoMsgWithLfd(4)
                 self.servo_msg *= 2
 
                 self.T_mission = True
-                if (self.path_name == 'parking_1' and current_waypoint + 20 >= len(self.global_path.poses)) : 
+                if (self.path_name == 'parking_1' and current_waypoint + 10 >= len(self.global_path.poses)) : 
                     self.setMotorMsgWithVel(2)
                     self.setServoMsgWithLfd(5)
                     self.servo_msg *= 2
-                elif (self.path_name == 'parking_4' and current_waypoint <= 24) :
+                elif (self.path_name == 'parking_4' and current_waypoint <= 19) :
                     self.setMotorMsgWithVel(2)
                     self.setServoMsgWithLfd(1)
                     self.servo_msg *= 2
-                elif  (self.path_name == 'parking_4' and current_waypoint >= 25) :
-                    self.setMotorMsgWithVel(8)
+                elif  (self.path_name == 'parking_4' and current_waypoint >= 20) :
+                    self.setMotorMsgWithVel(12)
                     self.setServoMsgWithLfd(5)
-                    self.servo_msg *= 2
+                    self.servo_msg *= 1.4
             else:
                 self.T_mission = False
 
-            if self.path_name == 'second' and current_waypoint <= 25:
-                self.setMotorMsgWithVel(8)
+            if self.path_name == 'second_faster' and current_waypoint <= 25:
+                self.setMotorMsgWithVel(15)
                 self.setServoMsgWithLfd(5)
                 self.publishCtrlCmd(self.motor_msg, self.servo_msg, self.brake_msg)
                 continue
 
             if self.yaw_rear == True :
-                self.setMotorMsgWithVel(1)
+                self.setMotorMsgWithVel(2)
                 self.setServoMsgWithLfd(1)
                 self.servo_msg *= -1
                 if self.path_name == 'parking_3':
@@ -382,11 +383,15 @@ class PurePursuit():
                 
 
             # T자 주차를 위한 path switching
+
+            if self.path_name == 'first_faster' and current_waypoint + 18  >= len(self.global_path.poses) :
+                self.setServoMsgWithLfd(len(self.global_path.poses) - current_waypoint)
+                
             if current_waypoint + 5  >= len(self.global_path.poses) :
-                if self.path_name == 'first':
+                if self.path_name == 'first_faster':
                     self.path_name = 'parking_1'
                     self.global_path = path_reader.read_txt(self.path_name+".txt")
-                    self.ctrl_cmd_msg.longlCmdType = 1
+                    # self.ctrl_cmd_msg.longlCmdType = 1
                     self.is_swith_path = False
 
                 elif self.path_name == 'parking_1' and current_waypoint +1 >= len(self.global_path.poses): 
@@ -396,7 +401,7 @@ class PurePursuit():
                     self.is_swith_path = False
                     for i in range(1000) :
                         self.publishCtrlCmd(self.motor_msg, self.servo_msg, self.brake_msg)
-                    rospy.sleep(2)
+                    rospy.sleep(1.2)
                     self.rear_mode()
                     continue
 
@@ -411,10 +416,10 @@ class PurePursuit():
                     self.is_swith_path = False
                     for i in range(1000) :
                         self.publishCtrlCmd(self.motor_msg, self.servo_msg, self.brake_msg)
-                    rospy.sleep(2)
+                    rospy.sleep(1.2)
                     self.forward_mode()
                 elif self.path_name == 'parking_4' and current_waypoint +5 >= len(self.global_path.poses): 
-                    self.path_name = 'second'
+                    self.path_name = 'second_faster'
                     self.global_path = path_reader.read_txt(self.path_name+".txt")
                     self.is_swith_path = False
                     self.publishCtrlCmd(self.motor_msg, self.servo_msg, self.brake_msg)
@@ -422,24 +427,24 @@ class PurePursuit():
 
             ###################################################################### 가속 미션 ######################################################################
 
-            if self.path_name == 'second':
+            if self.path_name == 'second_faster':
                 if 374 <= current_waypoint <= 380 :
                     self.setMotorMsgWithVel(12+min(current_waypoint-374,6))
                     self.setServoMsgWithLfd(min(18,current_waypoint-371))
                    
                 elif 381 <= current_waypoint <= 415 :
-                    self.setMotorMsgWithVel(19)
+                    self.setMotorMsgWithVel(19.5)
                     self.setServoMsgWithLfd(18)
                     
-                elif 416 <= current_waypoint <= 507: # 481 -> 461
+                elif 416 <= current_waypoint <= 504: # 481 -> 461
                     self.setMotorMsgWithVel(40)
                     self.setServoMsgWithLfd(25)
                     self.servo_msg /= 4
                     self.publishCtrlCmd(self.motor_msg, self.servo_msg, self.brake_msg)
                     continue
 
-                elif 508 <= current_waypoint <= 545:
-                    self.setMotorMsgWithVel(19)
+                elif 505 <= current_waypoint <= 545:
+                    self.setMotorMsgWithVel(19.5)
                     self.setServoMsgWithLfd(25)
                     self.setBrakeMsgWithNum(0.95)
                     self.servo_msg /= 3
@@ -447,13 +452,13 @@ class PurePursuit():
                     continue
                 
                 else:
-                    self.setMotorMsgWithVel(19)
+                    self.setMotorMsgWithVel(19.5)
                     self.setServoMsgWithLfd(20)
                     self.setBrakeMsgWithNum(0.0)
 
             ###################################################################### 종료 미션 ######################################################################
 
-            if self.path_name == 'second':
+            if self.path_name == 'second_faster':
                 if  783 <= current_waypoint <= 825 :
                     self.drive_right_signal()
 
@@ -468,35 +473,59 @@ class PurePursuit():
 
             ###################################################################### 곡선 코스 미션  ######################################################################
 
-            if self.path_name == 'first':
+            if self.path_name == 'first_faster':
                 if (1215 <= current_waypoint <= 1260):
                     self.setMotorMsgWithVel(12)
-                    self.setServoMsgWithLfd(3)
+                    self.setServoMsgWithLfd(4)
+
+                elif 1261 <= current_waypoint <= 1274:
+                    self.setMotorMsgWithVel(15)
+                    self.setServoMsgWithLfd(4 + (current_waypoint - 1260))
 
                 elif (1300 <= current_waypoint <= 1355):
                     self.setMotorMsgWithVel(12)
-                    self.setServoMsgWithLfd(3)
+                    self.setServoMsgWithLfd(4)
+
+                elif 1356 <= current_waypoint <= 1369:
+                    self.setMotorMsgWithVel(15)
+                    self.setServoMsgWithLfd(4 + (current_waypoint - 1355))
             
-            elif self.path_name == 'second':
+            elif self.path_name == 'second_faster':
                 if 39 <= current_waypoint <= 107:
-                    self.setMotorMsgWithVel(10)
-                    self.setServoMsgWithLfd(3)
+                    self.setMotorMsgWithVel(15)
+                    self.setServoMsgWithLfd(4)
+
+                elif 108 <= current_waypoint <= 121:
+                    self.setMotorMsgWithVel(15)
+                    self.setServoMsgWithLfd(4 + (current_waypoint - 107))
 
                 elif 212 <= current_waypoint <= 275:
-                    self.setMotorMsgWithVel(12)
-                    self.setServoMsgWithLfd(3)
+                    self.setMotorMsgWithVel(15)
+                    self.setServoMsgWithLfd(4)
+
+                elif 276 <= current_waypoint <= 289:
+                    self.setMotorMsgWithVel(15)
+                    self.setServoMsgWithLfd(4 + (current_waypoint - 275))
 
                 elif 325 <= current_waypoint <= 380:
-                    self.setMotorMsgWithVel(12)
-                    self.setServoMsgWithLfd(3)
+                    self.setMotorMsgWithVel(15)
+                    self.setServoMsgWithLfd(4)
+                
+                elif 381 <= current_waypoint <= 384:
+                    self.setMotorMsgWithVel(15)
+                    self.setServoMsgWithLfd(4 + (current_waypoint - 380))
                     
                 elif 643 <= current_waypoint <= 707 :
-                    self.setMotorMsgWithVel(12)
-                    self.setServoMsgWithLfd(3)
+                    self.setMotorMsgWithVel(15)
+                    self.setServoMsgWithLfd(4)
+                
+                elif 708 <= current_waypoint <= 721 :
+                    self.setMotorMsgWithVel(15)
+                    self.setServoMsgWithLfd(4 + (current_waypoint - 707))
 
             ##################################################################### 동적 장애물 미션 ######################################################################
 
-            if self.path_name == 'first':
+            if self.path_name == 'first_faster':
                 if (975 <= current_waypoint <= 1040 or 
                     1160 <= current_waypoint <= 1214): 
 
@@ -515,11 +544,11 @@ class PurePursuit():
                         self.dynamic_done = True
 
                     if (self.dynamic_done == False):
-                        self.setMotorMsgWithVel(10)
+                        self.setMotorMsgWithVel(15)
                         self.forward_mode()
 
                     else:
-                        self.setMotorMsgWithVel(19)
+                        self.setMotorMsgWithVel(19.5)
                         self.forward_mode()
 
                 elif (1350 <= current_waypoint <= 1410):
@@ -538,14 +567,14 @@ class PurePursuit():
                         self.dynamic_done = True
 
                     if (self.dynamic_done == False):
-                        self.setMotorMsgWithVel(8) 
+                        self.setMotorMsgWithVel(15) 
                         self.forward_mode()
 
                     else:
-                        self.setMotorMsgWithVel(19)
+                        self.setMotorMsgWithVel(19.5)
                         self.forward_mode()
 
-            elif self.path_name == 'second': 
+            elif self.path_name == 'second_faster': 
                 if (107 <= current_waypoint <= 160 or 
                     575 <= current_waypoint <= 642):
 
@@ -555,7 +584,7 @@ class PurePursuit():
                             self.emergency_mode()
                             self.dynamic_flag = True
                             # print("BRAKE")
-                            print(abs(self.dy_obs_info[1]))
+                            # print(abs(self.dy_obs_info[1]))
                             if (2 <= abs(self.dy_obs_info[1]) or self.dy_obs_info[1] == 0):
                                 break
                         continue
@@ -563,31 +592,30 @@ class PurePursuit():
                     if (self.dynamic_flag == True):
                         self.dynamic_done = True
 
-                    if (self.dynamic_flag == False):
-                        self.setMotorMsgWithVel(10)
-                        self.setServoMsgWithLfd(3)
+                    if (self.dynamic_done == False):
+                        self.setMotorMsgWithVel(15) 
                         self.forward_mode()
 
                     else:
-                        self.setMotorMsgWithVel(19)
+                        self.setMotorMsgWithVel(19.5)
                         self.forward_mode()
   
             ###################################################################### 신호등 미션 ######################################################################
             # 빨간불 -> 정지
             # 구간 출력을 위한 조건문  
-            # if (self.path_name == 'final_path_second' and 70 <= current_waypoint <= 130) or (self.path_name == 'final_path_first' and (535 <= current_waypoint <= 542 or 965 <= current_waypoint <= 971)) :
+            # if (self.path_name == 'final_path_second_faster' and 70 <= current_waypoint <= 130) or (self.path_name == 'final_path_first_faster' and (535 <= current_waypoint <= 542 or 965 <= current_waypoint <= 971)) :
             #     #print("Traffic Mission", current_waypoint)
             ########################################################################################################################################################
             
-            if self.path_name == 'first':
-                if 585 <= current_waypoint <= 590 and self.green_count - self.red_count <500: # 첫번째 신호등
+            if self.path_name == 'first_faster':
+                if 583 <= current_waypoint <= 593 and self.green_count - self.red_count <500: # 첫번째 신호등
                     self.brake()
             
                 if  1049 <= current_waypoint <= 1055 and self.green_count - self.red_count <500: # 두번째 신호등
                     self.brake()
             
 
-            if self.path_name == 'second': 
+            if self.path_name == 'second_faster': 
                 if 34 <= current_waypoint <= 39 and (self.green_count - self.red_count < 600 or self.red_count > 150) : # 세번째 신호등
                     self.brake()
             

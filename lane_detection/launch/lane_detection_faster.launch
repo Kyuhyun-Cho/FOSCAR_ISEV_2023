@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+    <node pkg="lane_detection" type="line_detector_faster.py" name="line_detector" output = 'screen'/>
+</launch>

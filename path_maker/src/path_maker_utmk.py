@@ -50,21 +50,15 @@ class PathMaker :
         
 
     def path_make(self):
-        longitude = self.longitude
-        latitude = self.latitude
-        altitude = self.altitude
-
         utmk_coordinate = Point() 
 
-        # UTM-K
-        proj_UTMK = Proj(init='epsg:5179')
+        self.proj_UTM = Proj(proj='utm', zone = 52, elips='WGS84', preserve_units=False)
 
-        # WGS84
-        proj_WGS84 = Proj(init='epsg:4326')
+        xy_zone = self.proj_UTM(self.longitude, self.latitude)
+        self.x, self.y = xy_zone[0], xy_zone[1]
 
-        utmk_longitude, utmk_latitude = transform(proj_WGS84, proj_UTMK, longitude, latitude) 
-        utmk_coordinate.x = utmk_longitude
-        utmk_coordinate.y = utmk_latitude 
+        utmk_coordinate.x = self.x
+        utmk_coordinate.y = self.y
         utmk_coordinate.z = 0
 
         distance = sqrt(pow(utmk_coordinate.x - self.prev_longitude, 2) + pow(utmk_coordinate.y - self.prev_latitude, 2))
