@@ -1,16 +1,14 @@
 # 국제대학생  EV 자율주행 경진대회
 
-## 대회 소개
-
-![포스터](https://user-images.githubusercontent.com/39543006/238260322-1ac3730b-d23c-45dd-9149-8efeb9e6c975.png)
-
-
 ## 대회 결과
 
 - 우수상 (3등)
 - 주행점수 200/200
 - 주행시간 5분 12초
+- 
+## 대회 소개
 
+![포스터](https://user-images.githubusercontent.com/39543006/238260322-1ac3730b-d23c-45dd-9149-8efeb9e6c975.png)
 
 ## 주행 영상
 
